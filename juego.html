@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memorama de Igualdad de Género</title>
+    <style>
+        /* Estilos generales del cuerpo de la página */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Contenedor principal del juego */
+        .contenedor-juego {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        /* Título del juego */
+        h1 {
+            color: #764ba2;
+            text-align: center;
+            margin-top: 0;
+            font-size: 2em;
+        }
+
+        /* Panel de información (intentos y parejas) */
+        .info-panel {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f0f0f0;
+            border-radius: 10px;
+        }
+
+        .info-item {
+            text-align: center;
+            font-size: 1.2em;
+        }
+
+        .info-item span {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.5em;
+        }
+
+        /* Tablero de cartas */
+        .tablero {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        /* Estilo de cada carta */
+        .carta {
+            aspect-ratio: 1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            transition: transform 0.3s ease;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        /* Efecto hover en las cartas */
+        .carta:hover {
+            transform: scale(1.05);
+        }
+
+        /* Carta volteada */
+        .carta.volteada {
+            background: white;
+            border: 3px solid #667eea;
+        }
+
+        /* Carta encontrada (par correcto) */
+        .carta.encontrada {
+            background: #4caf50;
+            cursor: default;
+            opacity: 0.6;
+        }
+
+        /* Ocultar el ícono cuando la carta está boca abajo */
+        .carta .icono {
+            display: none;
+        }
+
+        .carta.volteada .icono,
+        .carta.encontrada .icono {
+            display: block;
+        }
+
+        /* Mensaje educativo */
+        .mensaje-educativo {
+            background: #4caf50;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.1em;
+            display: none;
+            animation: aparecer 0.5s ease;
+        }
+
+        @keyframes aparecer {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Botón de reiniciar */
+        .boton-reiniciar {
+            display: block;
+            margin: 20px auto;
+            padding: 15px 30px;
+            background: #764ba2;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .boton-reiniciar:hover {
+            background: #667eea;
+        }
+
+        /* Modal de victoria */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-contenido {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            animation: aparecer 0.5s ease;
+        }
+
+        .modal-contenido h2 {
+            color: #4caf50;
+            font-size: 2em;
+            margin-top: 0;
+        }
+
+        .modal-contenido p {
+            font-size: 1.2em;
+            line-height: 1.6;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor-juego">
+        <h1>🌟 Memorama de Igualdad de Género 🌟</h1>
+        
+        <!-- Panel de información -->
+        <div class="info-panel">
+            <div class="info-item">
+                Intentos: <span id="intentos">0</span>
+            </div>
+            <div class="info-item">
+                Parejas: <span id="parejas">0/8</span>
+            </div>
+        </div>
+
+        <!-- Mensaje educativo -->
+        <div class="mensaje-educativo" id="mensaje"></div>
+
+        <!-- Tablero de cartas -->
+        <div class="tablero" id="tablero"></div>
+
+        <!-- Botón de reiniciar -->
+        <button class="boton-reiniciar" onclick="reiniciarJuego()">🔄 Nuevo Juego</button>
+    </div>
+
+    <!-- Modal de victoria -->
+    <div class="modal" id="modal">
+        <div class="modal-contenido">
+            <h2>¡Felicitaciones! 🎉</h2>
+            <p>Has completado el memorama de igualdad de género.</p>
+            <p><strong>La igualdad de género es un derecho fundamental que beneficia a toda la sociedad. Cuando mujeres y hombres tienen las mismas oportunidades, todos prosperamos juntos.</strong></p>
+            <p>Recuerda: El respeto, la equidad y la inclusión construyen un mundo mejor para todas las personas.</p>
+            <button class="boton-reiniciar" onclick="cerrarModal()">Jugar de nuevo</button>
+        </div>
+    </div>
+
+    <script>
+        // Datos de las cartas con íconos y mensajes educativos
+        const paresCartas = [
+            {
+                icono: '👩‍💼',
+                mensaje: '¡Excelente! Las mujeres y hombres pueden desempeñar cualquier profesión con la misma capacidad.'
+            },
+            {
+                icono: '👨‍🍳',
+                mensaje: '¡Muy bien! Los roles domésticos no tienen género. Todos podemos cocinar, limpiar y cuidar.'
+            },
+            {
+                icono: '👩‍🔬',
+                mensaje: '¡Genial! La ciencia y la tecnología necesitan la participación de todas las personas sin distinción.'
+            },
+            {
+                icono: '⚖️',
+                mensaje: '¡Correcto! La igualdad salarial es un derecho: mismo trabajo, mismo salario para todos.'
+            },
+            {
+                icono: '👨‍👧‍👦',
+                mensaje: '¡Perfecto! La crianza de los hijos es responsabilidad compartida de padres y madres.'
+            },
+            {
+                icono: '📚',
+                mensaje: '¡Exacto! La educación es la base de la igualdad. Todas las personas merecen acceso al conocimiento.'
+            },
+            {
+                icono: '🤝',
+                mensaje: '¡Sí! El respeto mutuo y la colaboración nos hacen más fuertes como sociedad.'
+            },
+            {
+                icono: '🌈',
+                mensaje: '¡Bravo! La diversidad e inclusión enriquecen nuestras comunidades y nos hacen mejores.'
+            }
+        ];
+
+        // Variables del juego
+        let cartasArray = [];
+        let primeraCarta = null;
+        let segundaCarta = null;
+        let bloquearTablero = false;
+        let intentos = 0;
+        let parejasEncontradas = 0;
+
+        // Función para inicializar el juego
+        function inicializarJuego() {
+            // Duplicar las cartas para crear pares y mezclarlas
+            cartasArray = [...paresCartas, ...paresCartas]
+                .sort(() => Math.random() - 0.5)
+                .map((carta, index) => ({
+                    ...carta,
+                    id: index
+                }));
+
+            // Renderizar el tablero
+            renderizarTablero();
+            
+            // Resetear contadores
+            intentos = 0;
+            parejasEncontradas = 0;
+            actualizarInfo();
+        }
+
+        // Función para renderizar el tablero
+        function renderizarTablero() {
+            const tablero = document.getElementById('tablero');
+            tablero.innerHTML = '';
+
+            cartasArray.forEach((carta) => {
+                const elementoCarta = document.createElement('div');
+                elementoCarta.className = 'carta';
+                elementoCarta.dataset.icono = carta.icono;
+                elementoCarta.dataset.mensaje = carta.mensaje;
+                elementoCarta.innerHTML = `<div class="icono">${carta.icono}</div>`;
+                elementoCarta.addEventListener('click', () => voltearCarta(elementoCarta));
+                tablero.appendChild(elementoCarta);
+            });
+        }
+
+        // Función para voltear una carta
+        function voltearCarta(carta) {
+            // No hacer nada si el tablero está bloqueado o la carta ya está volteada
+            if (bloquearTablero || carta.classList.contains('volteada') || carta.classList.contains('encontrada')) {
+                return;
+            }
+
+            // Voltear la carta
+            carta.classList.add('volteada');
+
+            // Si no hay primera carta seleccionada
+            if (!primeraCarta) {
+                primeraCarta = carta;
+                return;
+            }
+
+            // Si ya hay una primera carta, esta es la segunda
+            segundaCarta = carta;
+            bloquearTablero = true;
+            intentos++;
+            actualizarInfo();
+
+            // Verificar si las cartas coinciden
+            verificarPareja();
+        }
+
+        // Función para verificar si las cartas forman una pareja
+        function verificarPareja() {
+            const sonPareja = primeraCarta.dataset.icono === segundaCarta.dataset.icono;
+
+            if (sonPareja) {
+                // Es una pareja correcta
+                desactivarCartas();
+                mostrarMensaje(primeraCarta.dataset.mensaje);
+                parejasEncontradas++;
+                actualizarInfo();
+
+                // Verificar si el juego ha terminado
+                if (parejasEncontradas === paresCartas.length) {
+                    setTimeout(mostrarVictoria, 1000);
+                }
+            } else {
+                // No es pareja, voltear de nuevo
+                desVoltearCartas();
+            }
+        }
+
+        // Función para desactivar cartas que forman pareja
+        function desactivarCartas() {
+            primeraCarta.classList.add('encontrada');
+            segundaCarta.classList.add('encontrada');
+            resetearSeleccion();
+        }
+
+        // Función para voltear de nuevo las cartas que no coinciden
+        function desVoltearCartas() {
+            setTimeout(() => {
+                primeraCarta.classList.remove('volteada');
+                segundaCarta.classList.remove('volteada');
+                resetearSeleccion();
+            }, 1000);
+        }
+
+        // Función para resetear la selección de cartas
+        function resetearSeleccion() {
+            primeraCarta = null;
+            segundaCarta = null;
+            bloquearTablero = false;
+        }
+
+        // Función para mostrar mensaje educativo
+        function mostrarMensaje(texto) {
+            const mensaje = document.getElementById('mensaje');
+            mensaje.textContent = texto;
+            mensaje.style.display = 'block';
+
+            setTimeout(() => {
+                mensaje.style.display = 'none';
+            }, 3000);
+        }
+
+        // Función para actualizar la información del juego
+        function actualizarInfo() {
+            document.getElementById('intentos').textContent = intentos;
+            document.getElementById('parejas').textContent = `${parejasEncontradas}/${paresCartas.length}`;
+        }
+
+        // Función para mostrar el modal de victoria
+        function mostrarVictoria() {
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        // Función para cerrar el modal y reiniciar
+        function cerrarModal() {
+            document.getElementById('modal').style.display = 'none';
+            reiniciarJuego();
+        }
+
+        // Función para reiniciar el juego
+        function reiniciarJuego() {
+            primeraCarta = null;
+            segundaCarta = null;
+            bloquearTablero = false;
+            document.getElementById('mensaje').style.display = 'none';
+            inicializarJuego();
+        }
+
+        // Iniciar el juego cuando se carga la página
+        inicializarJuego();
+    </script>
+</body>
+</html>
